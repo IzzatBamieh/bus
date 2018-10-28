@@ -1,5 +1,5 @@
-defmodule Bus.ChangesetView do
-  use Bus.Web, :view
+defmodule BusWeb.ChangesetView do
+  use BusWeb, :view
 
   @doc """
   Traverses and translates changeset errors.

@@ -19,7 +19,7 @@ defmodule BusWeb.Router do
     get "/", PageController, :index
   end
 
-  scope "/topics", Bus.Web do
+  scope "/topics", BusWeb do
     pipe_through :api # Use the default browser stack
 
     get "/", TopicController, :index
