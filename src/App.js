@@ -1,26 +1,47 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import styled from 'styled-components';
+
+const TopicHome = styled.div`
+  display: flex;
+  flex-direction: row;
+`;
+
+const TopicCard = styled.div`
+  text-align: left;
+  border: solid;
+`;
+
+const TopicName = styled.h1`
+  font-size: 1.5em;
+  color: palevioletred;
+`;
+
+const TopicCount = styled.h1`
+  font-size: 1em; 
+  color: palevioletred;
+`;
 
 class App extends Component {
+  
   render() {
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
+      <TopicHome>
+        <TopicCard>
+          <TopicName>
+            User Email Updated
+          </TopicName>
+          <TopicCount>
+            50
+          </TopicCount>
           <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
+            className="Topic Details"
+            target="_blk"
             rel="noopener noreferrer"
           >
-            Learn React
+            More details
           </a>
-        </header>
-      </div>
+        </TopicCard>
+      </TopicHome>
     );
   }
 }
