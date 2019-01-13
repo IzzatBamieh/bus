@@ -22,28 +22,68 @@ const TopicCount = styled.h1`
 `;
 
 class App extends Component {
+
+
+  constructor(props) {
+    super(props);
+
+    this.state = {
+      data: [],
+    };
+  }
+
+
+  componentDidMount() {
+
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    fetch('127.0.0.1:9000/topics', { method: "get", headers })
+      .then(response => response.json())
+      .then(data => {
+        this.setState({ data: prepareFeed(data) })
+      })
+  }
   
   render() {
     return (
       <TopicHome>
+        {this.state.data.map((item, i) => {
+          return (<Topic
+          value={item}
+          key={i}
+          id={i} />)
+        })}
+      </TopicHome>
+    );
+  }
+}
+
+class Topic extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+      return (
         <TopicCard>
           <TopicName>
-            User Email Updated
-          </TopicName>
+            this.props.value
+            </TopicName>
           <TopicCount>
             50
-          </TopicCount>
+            </TopicCount>
           <a
             className="Topic Details"
             target="_blk"
             rel="noopener noreferrer"
           >
             More details
-          </a>
+            </a>
         </TopicCard>
-      </TopicHome>
-    );
+      );
+    }
   }
-}
 
 export default App;
