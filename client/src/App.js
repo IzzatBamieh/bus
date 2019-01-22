@@ -3,12 +3,16 @@ import styled from 'styled-components';
 
 const TopicHome = styled.div`
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
 `;
 
-const TopicCard = styled.div`
+const TopicCard = styled.button`
   text-align: left;
+  width: 20%;
+  border-radius: 239px;
+  background-color: aqua;
   border: solid;
+  margin: 10px;
 `;
 
 const TopicName = styled.h1`
@@ -28,30 +32,33 @@ class App extends Component {
     super(props);
 
     this.state = {
-      data: [],
+      data: {Topics: [{name: "test_1"}, {name: "test_2"}]},
+      topics_count: 0
     };
   }
 
 
-  componentDidMount() {
-
-    const headers = {
-      "Content-Type": "application/json",
-    };
-
-    fetch('127.0.0.1:9000/topics', { method: "get", headers })
-      .then(response => response.json())
-      .then(data => {
-        this.setState({ data: prepareFeed(data) })
-      })
-  }
+  //componentDidMount() {
+//
+  //  const headers = {
+  //    "Content-Type": "application/json",
+  //  };
+//
+  //  fetch('127.0.0.1:9000/topics', { method: "get", headers })
+  //    .then(response => response.json())
+  //    .then(data => {
+  //      this.setState({ data: { Topics: [{ name: "test" }] } })
+  //      this.setState({topics_count: {Topics:[{name: "test"}]}})
+  //    })
+  //}
   
   render() {
     return (
       <TopicHome>
-        {this.state.data.map((item, i) => {
+        {this.state.data.Topics.map((item, i) => {
           return (<Topic
-          value={item}
+          topic={item}
+          topics_count={this.topics_count}
           key={i}
           id={i} />)
         })}
@@ -69,18 +76,11 @@ class Topic extends React.Component {
       return (
         <TopicCard>
           <TopicName>
-            this.props.value
-            </TopicName>
+            {this.props.topic.name}
+          </TopicName>
           <TopicCount>
-            50
-            </TopicCount>
-          <a
-            className="Topic Details"
-            target="_blk"
-            rel="noopener noreferrer"
-          >
-            More details
-            </a>
+            {this.props.topics_count}
+          </TopicCount>
         </TopicCard>
       );
     }
