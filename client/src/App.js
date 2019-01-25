@@ -6,7 +6,15 @@ const TopicHome = styled.div`
   flex-direction: column;
 `;
 
-const TopicCard = styled.button`
+const Subscribers = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const Publishers = styled.div`
+`;
+
+const SubscriberCard = styled.button`
   text-align: left;
   width: 20%;
   border-radius: 239px;
@@ -15,13 +23,27 @@ const TopicCard = styled.button`
   margin: 10px;
 `;
 
-const TopicName = styled.h1`
+const SubscriberName = styled.h1`
   font-size: 1.5em;
   color: palevioletred;
 `;
 
-const TopicCount = styled.h1`
-  font-size: 1em; 
+const PublisherCard = styled.button`
+  text-align: left;
+  width: 20%;
+  border-radius: 239px;
+  background-color: aqua;
+  border: solid;
+  margin: 10px;
+`;
+
+const PublisherName = styled.h1`
+  font-size: 1.5em;
+  color: palevioletred;
+`;
+
+const PublisherTopic = styled.h1`
+  font-size: 1.5em;
   color: palevioletred;
 `;
 
@@ -32,7 +54,7 @@ class App extends Component {
     super(props);
 
     this.state = {
-      data: {Topics: [{name: "test_1"}, {name: "test_2"}]},
+      data: { Topics: [{ name: "test_1", publisher: "service_p_1", subscribers: [{ name: "service_1" }] }, { name: "test_2", publisher: "service_p_2", subscribers: [{name: "service_1"}]}]},
       topics_count: 0
     };
   }
@@ -56,34 +78,55 @@ class App extends Component {
     return (
       <TopicHome>
         {this.state.data.Topics.map((item, i) => {
-          return (<Topic
-          topic={item}
-          topics_count={this.topics_count}
-          key={i}
-          id={i} />)
+          return (<Publisher
+          topic={item} />)
         })}
       </TopicHome>
     );
   }
 }
 
-class Topic extends React.Component {
+class Publisher extends React.Component {
   constructor(props) {
     super(props);
   }
 
   render() {
       return (
-        <TopicCard>
-          <TopicName>
-            {this.props.topic.name}
-          </TopicName>
-          <TopicCount>
-            {this.props.topics_count}
-          </TopicCount>
-        </TopicCard>
+        <Publishers>
+          <PublisherCard>
+            <PublisherName>
+              {this.props.topic.publisher}
+            </PublisherName>
+            <PublisherTopic>
+              {this.props.topic.name}
+            </PublisherTopic>
+          </PublisherCard>
+          <Subscribers>
+            {this.props.topic.subscribers.map((subscriber, i) => {
+              return (<Subscriber
+                subscriber={subscriber} />)
+            })}
+          </Subscribers>
+        </Publishers>
       );
     }
   }
+
+class Subscriber extends React.Component {
+  constructor(props) {
+    super(props);
+  }
+
+  render() {
+    return (
+      <SubscriberCard>
+        <SubscriberName>
+          {this.props.subscriber.name}
+        </SubscriberName>
+      </SubscriberCard>
+    );
+  }
+}
 
 export default App;
