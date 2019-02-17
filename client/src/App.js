@@ -1,8 +1,11 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import Modal from 'react-modal';
+import { BrowserRouter as Router, Route, Link  } from 'react-router-dom';
 
-const BusHome = styled.div`
-`;
+const BusHome = styled.div``;
+
+const Button = styled.button``;
 
 const Dashbourd = styled.div`
   display: flex;
@@ -42,6 +45,29 @@ const PublisherCard = styled.button`
   margin: 30px;
 `;
 
+const MenuCard = styled.button`
+  text-align: left;
+  width: 100%;
+  border-radius: 239px;
+  background-color: aqua;
+  border: solid;
+  margin: 30px;
+`;
+
+const ItemCard = styled.button`
+  text-align: left;
+  width: 100%;
+  border-radius: 239px;
+  background-color: aqua;
+  border: solid;
+  margin: 30px;
+`;
+
+const ItemName= styled.h1`
+  font-size: 1.5em;
+  color: palevioletred;
+`;
+
 const PublisherName = styled.h1`
   font-size: 1.5em;
   color: palevioletred;
@@ -54,16 +80,26 @@ const PublisherTopic = styled.h1`
 
 class App extends Component {
 
-
   constructor(props) {
     super(props);
 
     this.state = {
       data: { Topics: [{ name: "test_1", publisher: "publisher_service_1", subscribers: [{ name: "subscriber_service_1" }, { name: "subscriber_service_2" }, { name: "subscriber_service_3" }] }, { name: "test_2", publisher: "publisher_service_2", subscribers: [{name: "service_1"}]}]},
-      topics_count: 0
+      topics_count: 0,
+      modalIsOpen: false
     };
+
+    this.openModal = this.openModal.bind(this);
+    this.closeModal = this.closeModal.bind(this);
   }
 
+  openModal() {
+    this.setState({modalIsOpen: true});
+  }
+
+  closeModal() {
+    this.setState({modalIsOpen: false});
+  }
 
   //componentDidMount() {
 //
@@ -81,12 +117,22 @@ class App extends Component {
   
   render() {
     return (
-      <BusHome>
-        {this.state.data.Topics.map((item, i) => {
-          return (<TopicsDashbourd
-          topic={item} />)
-        })}
-      </BusHome>
+      <Router>
+        <BusHome>
+            <Modal
+              isOpen={this.state.modalIsOpen}
+              onAfterOpen={this.afterOpenModal}
+              onRequestClose={this.closeModal}
+            >
+             <Route render={() => <TopicsMenu topics={this.state.data.Topics} />}/>
+            </Modal>
+          <Button onClick={this.openModal}>add service</Button>
+          {this.state.data.Topics.map((item, i) => {
+            return (<TopicsDashbourd
+            topic={item} />)
+          })}
+        </BusHome>
+      </Router>
     );
   }
 }
@@ -114,7 +160,8 @@ class TopicsDashbourd extends React.Component {
     }
   }
 
-function Subscriber(props){
+
+function Subscriber(props) {
   return (
     <SubscriberCard>
       <SubscriberName>
@@ -136,5 +183,27 @@ function Publisher(props) {
     </PublisherCard>
   );
 }
+
+function TopicsMenu(props) {
+  return (
+    <MenuCard>
+      {props.topics.map((item, i) => {
+        return (<MenuItem
+          item={item} />)
+      })}
+    </MenuCard>
+  );
+}
+
+function MenuItem(props) {
+  return (
+    <ItemCard>
+      <ItemName>
+        {props.item.name}
+      </ItemName>
+    </ItemCard>
+  );
+}
+
 
 export default App;
