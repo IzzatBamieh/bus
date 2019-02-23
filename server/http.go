@@ -3,10 +3,9 @@ package main
 import (
 	"net/http"
 
-	"go.uber.org/zap"
-
 	jsoniter "github.com/json-iterator/go"
 	"github.com/julienschmidt/httprouter"
+	"go.uber.org/zap"
 )
 
 type Runnable interface {
@@ -25,8 +24,8 @@ type MessageView struct {
 	Message string
 }
 
-type TopicsView struct {
-	Topics []string
+type StatsView struct {
+	LogNames []string
 }
 
 type Handler struct {
@@ -43,12 +42,12 @@ func NewHandler(bus *Bus, log *zap.SugaredLogger) *Handler {
 	}
 }
 
-func NewMessageView(message *Message) *MessageView {
-	if message == nil {
+func NewMessageView(value []byte) *MessageView {
+	if value == nil {
 		return &MessageView{}
 	}
 	return &MessageView{
-		Message: message.Body,
+		Message: string(value),
 	}
 }
 
@@ -62,13 +61,19 @@ func (handler *Handler) PostMessage(response http.ResponseWriter, request *http.
 		})
 		return
 	}
-
-	result := handler.bus.Send(params.ByName("name"), writeCommand.Message)
-	if result.Err != nil {
+	writer, err := handler.bus.GetWriter(params.ByName("name"))
+	if err != nil {
 		handler.log.Error(err)
 		response.WriteHeader(500)
 		return
 	}
+	_, err = writer.Append([]byte(writeCommand.Message))
+	if err != nil {
+		handler.log.Error(err)
+		response.WriteHeader(500)
+		return
+	}
+
 	response.WriteHeader(204)
 }
 
@@ -92,20 +97,16 @@ func (handler *Handler) GetMessage(response http.ResponseWriter, request *http.R
 		return
 	}
 
-	messenger, err := handler.bus.Receive(name, group, clientID)
+	reader, err := handler.bus.GetReader(name, group)
 	if err != nil {
 		response.WriteHeader(500)
 		return
 	}
-	result := <-messenger
-	if result.Err != nil {
-		response.WriteHeader(400)
-		handler.json.NewEncoder(response).Encode(HttpProblem{
-			Message: result.Err.Error(),
-		})
-		return
-	}
-	err = handler.json.NewEncoder(response).Encode(NewMessageView(result.Message))
+	receiver := reader.Join(clientID)
+	message := receiver.Next()
+	message.AckOK()
+
+	err = handler.json.NewEncoder(response).Encode(NewMessageView(message.Value))
 	if err != nil {
 		response.WriteHeader(500)
 		handler.log.Error(err)
@@ -113,17 +114,15 @@ func (handler *Handler) GetMessage(response http.ResponseWriter, request *http.R
 	}
 }
 
-func (handler *Handler) GetTopics(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	names, err := ListAll()
+func (handler *Handler) GetLogs(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	stats, err := handler.bus.LogStats()
 	if err != nil {
 		response.WriteHeader(500)
 		handler.log.Error(err)
 		return
 	}
-	view := &TopicsView{
-		Topics: names,
-	}
-	err = handler.json.NewEncoder(response).Encode(view)
+	// TODO: create a view for stats?
+	err = handler.json.NewEncoder(response).Encode(stats)
 	if err != nil {
 		response.WriteHeader(500)
 		handler.log.Error(err)

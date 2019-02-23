@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -15,23 +14,19 @@ func main() {
 	}
 	defer zapLogger.Sync()
 	logger := zapLogger.Sugar()
-	logger.Info("Bus starting...")
 
-	bus := NewBus(NewChannelFactory)
-	names, err := ListAll()
+	logger.Info("Bus starting...")
+	bus, err := NewBus()
 	if err != nil {
-		panic(err)
+		logger.Fatalf("Error starting bus", err)
 	}
-	for _, name := range names {
-		fmt.Printf("Name: %s\n", name)
-	}
-	// os.Exit(0)
+
 	handler := NewHandler(bus, logger)
 
 	router := httprouter.New()
-	router.POST("/topics/:name", handler.PostMessage)
-	router.GET("/topics/:name", handler.GetMessage)
-	router.GET("/topics", handler.GetTopics)
+	router.POST("/logs/:name", handler.PostMessage)
+	router.GET("/logs/:name", handler.GetMessage)
+	router.GET("/logs", handler.GetLogs)
 
 	logger.Info("HTTP server started at 127.0.0.1:9000")
 	logger.Fatal(http.ListenAndServe("127.0.0.1:9000", router))
