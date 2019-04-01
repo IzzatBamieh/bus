@@ -1,55 +1,39 @@
 package main
 
-type SendResult struct {
-	Err error
-}
-
-type ReceiveResult struct {
-	Message *Message
-	Err     error
-}
+import (
+	"github.com/izzatbamieh/bus/server/db"
+)
 
 type Bus struct {
-	channels       map[string]*Channel
-	channelFactory func(name string) (*Channel, error)
+	db *db.DB
 }
 
-func NewBus(channelFactory func(name string) (*Channel, error)) *Bus {
+func NewBus() (*Bus, error) {
+	db, err := db.NewDB("/tmp/bus")
+	if err != nil {
+		return nil, err
+	}
 	return &Bus{
-		channels:       map[string]*Channel{},
-		channelFactory: channelFactory,
-	}
+		db,
+	}, nil
 }
 
-func (bus *Bus) Send(name, message string) *SendResult {
-	_, ok := bus.channels[name]
-	if !ok {
-		channel, err := bus.channelFactory(name)
-		if err != nil {
-			return &SendResult{
-				Err: err,
-			}
-		}
-		bus.channels[name] = channel
+func (bus *Bus) GetReader(logID string, readerID string) (*db.Reader, error) {
+	log, err := bus.db.Log(logID)
+	if err != nil {
+		return nil, err
 	}
-	err := bus.channels[name].Send(NewMessage(message))
-	return &SendResult{
-		Err: err,
-	}
+	return log.Reader(readerID)
 }
 
-func (bus *Bus) Receive(channelName, receiverName, clientName string) (chan ReceiveResult, error) {
-	_, ok := bus.channels[channelName]
-	if !ok {
-		channel, err := bus.channelFactory(channelName)
-		if err != nil {
-			return nil, err
-		}
-		bus.channels[channelName] = channel
+func (bus *Bus) GetWriter(logID string) (*db.Writer, error) {
+	log, err := bus.db.Log(logID)
+	if err != nil {
+		return nil, err
 	}
-	return bus.channels[channelName].Receive(clientName, receiverName)
+	return log.Writer(), nil
 }
 
-func (bus *Bus) GetReceiver(name, group string) (*Receiver, error) {
-	return bus.channels[name].receivers[group], nil
+func (bus *Bus) LogStats() (*db.DBStats, error) {
+	return bus.db.Stats()
 }
