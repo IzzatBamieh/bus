@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import styled from 'styled-components';
 import Modal from 'react-modal';
 import { BrowserRouter as Router, Route, Link  } from 'react-router-dom';
@@ -13,9 +13,10 @@ class App extends Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-      ifBus: false,
-    };
+    this.state ={
+      services: 'create'
+    }
+    this.createService = this.createService.bind(this);
   }
 
   //componentDidMount() {
@@ -32,34 +33,50 @@ class App extends Component {
   //    })
   //}
 
+  createService(service) {
+    this.setState({services : service});
+  }
+
   render() {
     return (
       <Home>
-        <BusHome ifBus={this.state.ifBus}/>
+        <CreateService  createService = {this.createService} service = {this.state.services}/>
       </Home>
     );
   }
 }
 
-function updateState(text){
-  this.setState({text})
-}
 
-function BusHome(props) {
-  const ifBus = props.ifBus;
-  if (ifBus) {
-    return <loadBus />;
+
+function CreateService(props) {
+  switch(props.service) {
+    case 'create':
+      const chooseAction = props.createService('choose');
+      return <StartSerivce onClick={chooseAction}/>
+    case 'choose':
+      return < ChooseSerivce onClick={props.createService} />
+    default:
+      return 'action unknown'
   }
-  return <CreateBus />;
 }
 
-
-function CreateBus(props) {
-  return <Button onClick={this.}>add bus</Button>
+function StartSerivce(props) {
+  //props.createService('')
+  return (
+    <Fragment>
+       <Button onClick={props.createService}>Create a Service</Button>
+    </Fragment>
+  );
 }
 
-function loadBus(props) {
-  return <h1>Please sign up.</h1>;
+function ChooseSerivce(props) {
+  return (
+    <Fragment>
+      <Button onClick={props.createService}> Function</Button>
+      <Button onClick={props.createService}> DB </Button>
+      <Button onClick={props.createService}> Service integration</Button>
+    </Fragment>
+  );
 }
 
 export default App;
