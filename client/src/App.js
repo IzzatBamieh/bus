@@ -1,11 +1,11 @@
 import React, { Component, Fragment } from 'react';
 import styled from 'styled-components';
-import Modal from 'react-modal';
-import { BrowserRouter as Router, Route, Link  } from 'react-router-dom';
 
 const Home = styled.div``;
 
 const Button = styled.button``;
+
+const Input = styled.input ``;
 
 
 class App extends Component {
@@ -14,33 +14,19 @@ class App extends Component {
     super(props);
 
     this.state ={
-      services: 'create'
+      service: 'create'
     }
-    this.createService = this.createService.bind(this);
+    this.setService = this.setService.bind(this);
   }
 
-  //componentDidMount() {
-//
-  //  const headers = {
-  //    "Content-Type": "application/json",
-  //  };
-//
-  //  fetch('127.0.0.1:9000/topics', { method: "get", headers })
-  //    .then(response => response.json())
-  //    .then(data => {
-  //      this.setState({ data: { Topics: [{ name: "test" }] } })
-  //      this.setState({topics_count: {Topics:[{name: "test"}]}})
-  //    })
-  //}
-
-  createService(service) {
-    this.setState({services : service});
+  setService(service) {
+    this.setState({service : service});
   }
 
   render() {
     return (
       <Home>
-        <CreateService  createService = {this.createService} service = {this.state.services}/>
+        <CreateService  setService = {this.setService} service = {this.state.service}/>
       </Home>
     );
   }
@@ -51,32 +37,160 @@ class App extends Component {
 function CreateService(props) {
   switch(props.service) {
     case 'create':
-      const chooseAction = props.createService('choose');
-      return <StartSerivce onClick={chooseAction}/>
+      return <StartService setService={props.setService}/>
     case 'choose':
-      return < ChooseSerivce onClick={props.createService} />
+      return <ChooseService setService={props.setService}/>
+    case 'function':
+      return <CreateFunction setService={props.setService}/>
+    case 'DB':
+      return <CreateDB setService={props.setService}/>
+    case 'External Service':
+      return <CreateExternalService setService={props.setService}/>
     default:
-      return 'action unknown'
+      throw Error('action unknown')
   }
 }
 
-function StartSerivce(props) {
-  //props.createService('')
-  return (
-    <Fragment>
-       <Button onClick={props.createService}>Create a Service</Button>
-    </Fragment>
-  );
+class StartService extends Component {
+
+  constructor(props) {
+    super(props);
+
+    this.chooseService = this.chooseService.bind(this);
+  }
+
+
+  chooseService() {
+    this.props.setService('choose');
+  }
+
+  render() {
+    return (
+      <Home>
+         <Button onClick={this.chooseService}>Create a Service</Button>
+      </Home>
+    );
+  }
 }
 
-function ChooseSerivce(props) {
-  return (
-    <Fragment>
-      <Button onClick={props.createService}> Function</Button>
-      <Button onClick={props.createService}> DB </Button>
-      <Button onClick={props.createService}> Service integration</Button>
-    </Fragment>
-  );
+class ChooseService extends Component  {
+
+  constructor(props) {
+    super(props);
+
+    this.createFunction = this.createFunction.bind(this);
+    this.createDB = this.createDB.bind(this);
+    this.createExternalService = this.createExternalService.bind(this);
+  }
+
+  createFunction() {
+    this.props.setService('function');
+  }
+
+  createDB() {
+    this.props.setService('DB');
+  }
+
+  createExternalService() {
+    this.props.setService('External Service');
+  }
+
+  render() {
+    return (
+      <Fragment>
+        <Button onClick={this.createFunction}>Function</Button>
+        <Button onClick={this.createDB}>DB</Button>
+        <Button onClick={this.createExternalService}>Service External Service</Button>
+      </Fragment>
+    );
+  }
+}
+
+
+class CreateFunction extends Component  {
+
+  constructor(props) {
+    super(props);
+
+    this.setService = this.setService.bind(this);
+    this.createFunction = this.createFunction.bind(this);
+  }
+
+  setService() {
+    this.props.setService('create');
+  }
+
+  createFunction(){
+    // make api request to server
+    this.setService();
+  }
+
+  render() {
+    return (
+      <Home>
+        <Input type='text'/>
+        <Button onClick={this.createFunction}>Submit</Button>
+      </Home>
+    );
+  }
+}
+
+
+class CreateDB extends Component  {
+
+  constructor(props) {
+    super(props);
+
+    this.setService = this.setService.bind(this);
+    this.createDB = this.createDB.bind(this);
+  }
+
+  setService() {
+    this.props.setService('create');
+  }
+
+  createDB(){
+    // make api request to server
+    this.setService();
+  }
+
+  render() {
+    return (
+      <Home>
+        <Input type='text'/>
+        <Button onClick={this.createDB}>Submit</Button>
+      </Home>
+    );
+  }
+}
+
+
+class CreateExternalService extends Component  {
+
+  constructor(props) {
+    super(props);
+
+    this.setService = this.setService.bind(this);
+    this.createExternalService = this.createExternalService.bind(this);
+  }
+
+  setService() {
+    this.props.setService('create');
+  }
+
+  createExternalService(){
+    // make api request to server
+    this.setService();
+  }
+
+  render() {
+    return (
+      <Home>
+        <Input type='text'/>
+        <Button onClick={this.createExternalService}>Submit</Button>
+      </Home>
+    );
+  }
 }
 
 export default App;
