@@ -2,32 +2,60 @@ package main
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/julienschmidt/httprouter"
-	"go.uber.org/zap"
 )
 
 func main() {
-	zapLogger, err := zap.NewProduction()
+	logger := NewLogger()
+
+	logger.Info("Starting...")
+
+	provider, err := NewProvider()
 	if err != nil {
-		panic(err)
+		logger.Fatal(err)
 	}
-	defer zapLogger.Sync()
-	logger := zapLogger.Sugar()
-
-	logger.Info("Bus starting...")
-	bus, err := NewBus()
+	bus, err := NewBus(logger, provider)
 	if err != nil {
-		logger.Fatalf("Error starting bus", err)
+		logger.Fatal(err)
 	}
-
-	handler := NewHandler(bus, logger)
-
+	service, err := NewLambdaNodeForgeService(provider, nil)
+	if err != nil {
+		logger.Fatal(err)
+	}
+	handler := NewHandler(bus, logger, service)
 	router := httprouter.New()
-	router.POST("/logs/:name", handler.PostMessage)
-	router.GET("/logs/:name", handler.GetMessage)
-	router.GET("/logs", handler.GetLogs)
+	router.POST("/services", handler.PostServices)
+	router.GET("/services", handler.GetServices)
+	router.DELETE("/services/:name", handler.DeleteService)
 
 	logger.Info("HTTP server started at 127.0.0.1:9000")
 	logger.Fatal(http.ListenAndServe("127.0.0.1:9000", router))
+}
+
+func testSendReceive(logger *Logger, bus *Bus) {
+	go func() {
+		for {
+			logger.Info("Sending message:", "foo")
+			if err := bus.Send("test_01", []byte("foo")); err != nil {
+				logger.Fatal(err)
+			}
+			time.Sleep(2 * time.Second)
+		}
+	}()
+	receiver, err := bus.Receive("test_01", "consumer_01")
+	if err != nil {
+		logger.Fatal(err)
+	}
+	for {
+		message, err := receiver.Next()
+		if err != nil {
+			logger.Fatal(err)
+		}
+		logger.Info("Received message:", string(message.Body))
+		if err = message.Ack(); err != nil {
+			logger.Fatal(err)
+		}
+	}
 }
