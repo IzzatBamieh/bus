@@ -1,131 +1,99 @@
 package main
 
 import (
+	"io"
 	"net/http"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/julienschmidt/httprouter"
-	"go.uber.org/zap"
 )
 
-type Runnable interface {
-	Run(interface{}, error)
-}
-
-type HttpProblem struct {
-	Message string
-}
-
-type WriteCommand struct {
-	Message string
-}
-
-type MessageView struct {
-	Message string
-}
-
-type StatsView struct {
-	LogNames []string
-}
-
 type Handler struct {
-	bus  *Bus
-	log  *zap.SugaredLogger
-	json jsoniter.API
+	bus    *Bus
+	logger *Logger
+	forge  *LambdaNodeForgeService
 }
 
-func NewHandler(bus *Bus, log *zap.SugaredLogger) *Handler {
+type HTTPCreateServiceCommand struct {
+	Encoder
+	Name string
+}
+
+func newHTTPCreateServiceCommand(reader io.Reader) (*HTTPCreateServiceCommand, error) {
+	command := &HTTPCreateServiceCommand{}
+	err := command.decode(reader, command)
+
+	return command, err
+}
+
+func (command *HTTPCreateServiceCommand) GetName() string {
+	return command.Name
+}
+
+type httpProblem struct {
+	Encoder
+	Message string
+	Error   string
+}
+
+func newHTTPProblem(response http.ResponseWriter, err error, message string) {
+	problem := httpProblem{
+		Message: message,
+		Error:   err.Error(),
+	}
+	response.WriteHeader(400)
+	err = problem.encode(response, problem)
+	if err != nil {
+		return
+	}
+}
+
+type listServicesResponse struct {
+	Encoder
+	Services []string
+}
+
+func NewHandler(bus *Bus, logger *Logger, forge *LambdaNodeForgeService) *Handler {
 	return &Handler{
-		bus:  bus,
-		log:  log,
-		json: jsoniter.ConfigCompatibleWithStandardLibrary,
+		bus:    bus,
+		logger: logger,
+		forge:  forge,
 	}
 }
 
-func NewMessageView(value []byte) *MessageView {
-	if value == nil {
-		return &MessageView{}
+func (handler *Handler) PostServices(
+	response http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	command, err := newHTTPCreateServiceCommand(request.Body)
+	if err != nil {
+		newHTTPProblem(response, err, "could not understand the request")
+		return
 	}
-	return &MessageView{
-		Message: string(value),
+	err = handler.forge.CreateService(command)
+	if err != nil {
+		newHTTPProblem(response, err, "problem creating the service")
+		return
+	}
+	response.WriteHeader(201)
+}
+
+func (handler *Handler) GetServices(
+	response http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	services := handler.forge.ListServices()
+	view := &listServicesResponse{
+		Services: services,
+	}
+	response.WriteHeader(200)
+	err := view.encode(response, view)
+	if err != nil {
+		handler.logger.Error(err)
 	}
 }
 
-func (handler *Handler) PostMessage(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	writeCommand := &WriteCommand{}
-	err := handler.json.NewDecoder(request.Body).Decode(writeCommand)
+func (handler *Handler) DeleteService(
+	writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	err := handler.forge.DeleteService(params.ByName("name"))
 	if err != nil {
-		response.WriteHeader(400)
-		handler.json.NewEncoder(response).Encode(HttpProblem{
-			Message: "Could not understand the request",
-		})
+		newHTTPProblem(writer, err, "problem deleting the service")
 		return
 	}
-	writer, err := handler.bus.GetWriter(params.ByName("name"))
-	if err != nil {
-		handler.log.Error(err)
-		response.WriteHeader(500)
-		return
-	}
-	_, err = writer.Append([]byte(writeCommand.Message))
-	if err != nil {
-		handler.log.Error(err)
-		response.WriteHeader(500)
-		return
-	}
-
-	response.WriteHeader(204)
-}
-
-func (handler *Handler) GetMessage(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	name := params.ByName("name")
-	queries := request.URL.Query()
-	group := queries.Get("group")
-	if group == "" {
-		response.WriteHeader(400)
-		handler.json.NewEncoder(response).Encode(HttpProblem{
-			Message: "Must supply non-empty 'group' query parameter",
-		})
-		return
-	}
-	clientID := queries.Get("client_id")
-	if clientID == "" {
-		response.WriteHeader(400)
-		handler.json.NewEncoder(response).Encode(HttpProblem{
-			Message: "Must supply non-empty 'client_id' query parameter",
-		})
-		return
-	}
-
-	reader, err := handler.bus.GetReader(name, group)
-	if err != nil {
-		response.WriteHeader(500)
-		return
-	}
-	receiver := reader.Join(clientID)
-	message := receiver.Next()
-	message.AckOK()
-
-	err = handler.json.NewEncoder(response).Encode(NewMessageView(message.Value))
-	if err != nil {
-		response.WriteHeader(500)
-		handler.log.Error(err)
-		return
-	}
-}
-
-func (handler *Handler) GetLogs(response http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	stats, err := handler.bus.LogStats()
-	if err != nil {
-		response.WriteHeader(500)
-		handler.log.Error(err)
-		return
-	}
-	// TODO: create a view for stats?
-	err = handler.json.NewEncoder(response).Encode(stats)
-	if err != nil {
-		response.WriteHeader(500)
-		handler.log.Error(err)
-		return
-	}
+	writer.WriteHeader(204)
 }
