@@ -26,6 +26,7 @@ func main() {
 	}
 	handler := NewHandler(bus, logger, service)
 	router := httprouter.New()
+	router.OPTIONS("/services", handler.PostServices)
 	router.POST("/services", handler.PostServices)
 	router.GET("/services", handler.GetServices)
 	router.DELETE("/services/:name", handler.DeleteService)

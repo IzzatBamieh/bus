@@ -40,6 +40,7 @@ func newHTTPProblem(response http.ResponseWriter, err error, message string) {
 		Message: message,
 		Error:   err.Error(),
 	}
+
 	response.WriteHeader(400)
 	err = problem.encode(response, problem)
 	if err != nil {
@@ -60,8 +61,20 @@ func NewHandler(bus *Bus, logger *Logger, forge *LambdaNodeForgeService) *Handle
 	}
 }
 
+func setupResponse(response *http.ResponseWriter, req *http.Request) {
+	(*response).Header().Set("Access-Control-Allow-Origin", "*")
+	(*response).Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
+	(*response).Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization")
+}
+
 func (handler *Handler) PostServices(
 	response http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	setupResponse(&response, request)
+	if request.Method == "OPTIONS" {
+		response.WriteHeader(200)
+		return
+	}
+
 	command, err := newHTTPCreateServiceCommand(request.Body)
 	if err != nil {
 		newHTTPProblem(response, err, "could not understand the request")
@@ -77,6 +90,7 @@ func (handler *Handler) PostServices(
 
 func (handler *Handler) GetServices(
 	response http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	setupResponse(&response, request)
 	services := handler.forge.ListServices()
 	view := &listServicesResponse{
 		Services: services,
@@ -90,6 +104,7 @@ func (handler *Handler) GetServices(
 
 func (handler *Handler) DeleteService(
 	writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	setupResponse(&writer, request)
 	err := handler.forge.DeleteService(params.ByName("name"))
 	if err != nil {
 		newHTTPProblem(writer, err, "problem deleting the service")
