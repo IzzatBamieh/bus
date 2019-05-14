@@ -1,6 +1,12 @@
 import React, { Component, Fragment } from 'react';
 import styled from 'styled-components';
 
+import {
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+} from 'styled-dropdown-component';
+
 const Home = styled.div``;
 
 const Button = styled.button``;
@@ -40,6 +46,8 @@ function CreateService(props) {
       return <ChooseService setService={props.setService}/>
     case 'function':
       return <CreateFunction setService={props.setService}/>
+    case 'customize':
+      return <CustomizeFunction setService={props.setService}/>
     default:
       throw Error('action unknown')
   }
@@ -104,7 +112,7 @@ class CreateFunction extends Component  {
   }
 
   setService() {
-    this.props.setService('create');
+    this.props.setService('choose');
   }
 
   updateInputValue(event) {
@@ -113,7 +121,45 @@ class CreateFunction extends Component  {
 
   createFunction(){
     createService(this.state.serviceName)
-    // make api request to server serviceName
+
+    this.setService();
+  }
+
+  render() {
+    return (
+      <Home>
+        <Input type='text' value={this.state.serviceName} onChange={event => this.updateInputValue(event)}/>
+        <Button onClick={this.createFunction} disabled={!this.state.serviceName}>Submit</Button>
+      </Home>
+    );
+  }
+}
+
+class CustomizeFunction extends Component  {
+
+  constructor(props) {
+    super(props);
+
+    this.state ={
+      serviceName: null
+    }
+
+    this.setService = this.setService.bind(this);
+    this.createFunction = this.createFunction.bind(this);
+    this.createService = createService.bind(this);
+  }
+
+  setService() {
+    this.props.setService('choose');
+  }
+
+  updateInputValue(event) {
+    this.setState({serviceName : event.target.value});
+  }
+
+  createFunction(){
+    createService(this.state.serviceName)
+
     this.setService();
   }
 
