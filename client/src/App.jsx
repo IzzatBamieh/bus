@@ -1,11 +1,7 @@
-import React, { Component, Fragment } from 'react';
+import React, { Component, Fragment} from 'react';
 import styled from 'styled-components';
 
-import {
-  Dropdown,
-  DropdownItem,
-  DropdownMenu,
-} from 'styled-dropdown-component';
+import { Dropdown, DropdownToggle, DropdownMenu, DropdownItem } from 'reactstrap';
 
 const Home = styled.div``;
 
@@ -46,8 +42,6 @@ function CreateService(props) {
       return <ChooseService setService={props.setService}/>
     case 'function':
       return <CreateFunction setService={props.setService}/>
-    case 'customize':
-      return <CustomizeFunction setService={props.setService}/>
     default:
       throw Error('action unknown')
   }
@@ -103,12 +97,15 @@ class CreateFunction extends Component  {
     super(props);
 
     this.state ={
-      serviceName: null
+      serviceName: '',
+      serviceRoute: '',
+      serviceModel: ''
     }
 
     this.setService = this.setService.bind(this);
     this.createFunction = this.createFunction.bind(this);
     this.createService = createService.bind(this);
+    this.isEnabled = this.isEnabled();
   }
 
   setService() {
@@ -116,67 +113,57 @@ class CreateFunction extends Component  {
   }
 
   updateInputValue(event) {
-    this.setState({serviceName : event.target.value});
+    const target = event.target;
+    const value = target.value;
+    const name = target.name;
+
+    this.setState({
+      [name]: value
+    });
   }
 
   createFunction(){
-    createService(this.state.serviceName)
+    createService(this.state)
 
     this.setService();
   }
 
-  render() {
-    return (
-      <Home>
-        <Input type='text' value={this.state.serviceName} onChange={event => this.updateInputValue(event)}/>
-        <Button onClick={this.createFunction} disabled={!this.state.serviceName}>Submit</Button>
-      </Home>
-    );
-  }
-}
-
-class CustomizeFunction extends Component  {
-
-  constructor(props) {
-    super(props);
-
-    this.state ={
-      serviceName: null
-    }
-
-    this.setService = this.setService.bind(this);
-    this.createFunction = this.createFunction.bind(this);
-    this.createService = createService.bind(this);
-  }
-
-  setService() {
-    this.props.setService('choose');
-  }
-
-  updateInputValue(event) {
-    this.setState({serviceName : event.target.value});
-  }
-
-  createFunction(){
-    createService(this.state.serviceName)
-
-    this.setService();
-  }
+  isEnabled() {
+    const isAllFieldsTrue= this.state.serviceName && this.state.serviceRoute && this.state.serviceModel;
+    return isAllFieldsTrue;
+   }
 
   render() {
     return (
       <Home>
-        <Input type='text' value={this.state.serviceName} onChange={event => this.updateInputValue(event)}/>
-        <Button onClick={this.createFunction} disabled={!this.state.serviceName}>Submit</Button>
+        <form>
+          <label>
+            Service Name
+            <Input type='text' name='serviceName' value={this.state.serviceName} onChange={event => this.updateInputValue(event)}/>
+          </label>
+          <br/>
+          <label>
+            Service Route 
+            <Input type='text' name='serviceRoute' value={this.state.serviceRoute} onChange={event => this.updateInputValue(event)}/>
+          </label>
+          <br/>
+          <label>
+            Service Model 
+            <Input type='text' name='serviceModel' value={this.state.serviceModel} onChange={event => this.updateInputValue(event)}/>
+          </label>
+          <br/>
+          <Button onClick={this.createFunction}>Submit</Button>
+        </form>
       </Home>
-    );
+    );    
   }
 }
 
-function createService(service) {
+function createService(options) {
   const headers = {'Content-Type': 'application/json',
                     'Accept': 'application/json'};
-  const body = JSON.stringify({'name': service})
+  const body = JSON.stringify(options);
+  console.log(body);
   return fetch('http://127.0.0.1:9000/services',  {
       cache: "no-cache", 
       method: "POST",
