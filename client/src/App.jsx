@@ -22,20 +22,20 @@ class App extends Component {
         serviceRoute: '',
         serviceModel: '',
       },
-      updateInputValue: (event) => this.updateInputValue(event),
+      updateInputValue: (event) => this.updateInputValues(event),
       createService: this.createService
 
     }
   }
 
-  updateInputValue(event) {
+  updateInputValues(event) {
     const target = event.target;
     const value = target.value;
     const name = target.name;
 
-    this.setState({
+    this.setState({options: {
       [name]: value
-    });
+    }});
   }
 
   createService() {
@@ -64,9 +64,11 @@ class App extends Component {
   }
 }
 
-const CreateService = (ServiceContext) => (
-  <ServiceContext.Consumer>
-    {(this.context)}=> (
+
+class CreateService extends Component {
+  static contextType = ServiceContext;
+  render() {
+    return (
       <Fragment>
         <form>
           <label>Service Name
@@ -86,9 +88,8 @@ const CreateService = (ServiceContext) => (
             <Button onClick={this.context.createFunction}>Submit</Button>
         </form>
       </Fragment>
-    )}
-
-  </ServiceContext.Consumer>
-)
+    )
+  }
+}
 
 export default App;
